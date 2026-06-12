@@ -1,0 +1,631 @@
+#This R script includes all silk-spinning character analyses used for the manuscript Diversification of the Corophiida amphipod silk-spinning systems (McKim et al., in review)
+#All the following analyses were conducted by Siena McKim 
+
+#Part one is the ancestral state reconstruction analysis for key silk-spinning traits in the Corophiida
+#Part two are the correlative evolution analyses including Pagel's test for dependence and stochastic character mapping of joint traits
+
+#Figures produced from these analysis were exported as svg files and then edited and arranged in Adobe Illustrator. 
+#full taxonomic names added to the tips in final figures
+       #keep in mind cer_spp. is actually Notopoma sp. A. Changed this in the figure. 
+
+# SETTING UP ENVRIONMENT ----
+library(phylogram) #allows us to read in our phylogeny
+library(ape) #provides the chronos function for making our tree ultrametric
+library(corHMM) #provide rayDISC function for ASR
+library(phytools) #allows us to do lots of stuff with our phylogeny, like plot & get node/tip info
+# set working directory. This will make calling all data files easier if everything is in the same folder. 
+setwd("") #enter the path to the folder where you have saved your files 
+
+#PART ONE - ANCESTRAL STATE RECONSTRUCTION ----
+#marginal ancestral state reconstruction analysis using corHMM (rayDISC function)
+
+# IMPORT PHYLOGENY & MAKE ULTRAMETRIC ----
+
+#names on phylogeny need to match exactly with character df
+tree <- read.tree("tree_newick.txt") #tree_newick.txt file
+plot(tree) #look at tree
+nodelabels() #look at assigned node lables
+tree_pruned <- collapse.singles(tree) #collapse nodes with single lineages
+plot(tree_pruned) #look at pruned tree
+nodelabels() #Take a look at tree. Looks good now!
+#Need tree to be ultrametric. But first, see if the tree is rooted.
+is.rooted(tree_pruned) #TRUE
+#create ultrametric tree with correlated model. Lambda smoothing parameter, model specifies model of sub rate variation among branches correlated
+tree_chrono <- chronos(tree_pruned, lambda = 1, model = "correlated")
+# test if tree is ultrametric
+ultratree <- read.tree(text=write.tree(tree_chrono)) 
+is.ultrametric(ultratree) # want to see "TRUE" returned
+plot(tree_chrono) #take a look, see tips end in same place
+nodelabels() #double checking no hidden nodes
+tiplabels() #double check tip labels
+
+#IMPORT CHARACTER TABLE, ASSIGN COLORS, & CHECK LABELING ----
+
+#four characters for this anlysis, character state tables available within same directory
+
+#LATERAL DUCTS of DISTAL GLANDS ----
+#distal glands have expanded lateral duct in some taxa, 0 - absent 1 - typical 2 - expanded
+distal_gland_states <- read.csv("distal_gland_states.csv")
+gland_df <- data.frame(distal_gland_states) #convert table into a data frame 
+summary(gland_df) #take a look at the data frame. 
+gland_df$state #double check states look right
+plot(tree_chrono) #double check I have my tree
+nodelabels() #double checking no hidden nodes
+
+# Define colors so that index = state + 1 (since R indexing starts at 1)
+gland_state_colors <- c("white", "lightblue", "darkblue")  
+# 0 -> white (absent), 1 -> lightblue (typical), 2 -> darkblue (expanded)
+# Make sure your dataframe is ordered to match tree tips
+gland_df_ordered <- gland_df[match(tree_chrono$tip.label, gland_df$species), ]
+#look at gland_df_ordered to double check that there are no mismatches & things in the df aren't spelled wrong
+# Now assign tip colors based on state
+gland_tip_state_colors <- gland_state_colors[gland_df_ordered$state + 1]
+plot(tree_chrono, show.tip.label = TRUE)
+tiplabels(pch = 21, bg = gland_tip_state_colors, col = "black", cex = 1.5, offset = -0.02)
+
+
+# DACTYLUS SLIT LOCATION ----
+dslit_states <- read.csv("dactylus_slit_states.csv") #read in 
+dslit_df <- data.frame(dslit_states) #convert table into a data frame 
+summary(dslit_df) #take a look at the data frame. 
+dslit_df$state #double check states look right
+plot(tree_chrono) #double check I have my tree
+nodelabels() #double checking no hidden nodes
+
+# Define colors so that index = state + 1 (since R indexing starts at 1)
+dslit_state_colors <- c("white", "limegreen", "darkgreen")  
+# 0 -> white (absent), 1 -> limegreen (slit same side as sensillum), 2 -> darkgreen (slit opposite of sensillum)
+# Make sure your dataframe is ordered to match tree tips
+dslit_df_ordered <- dslit_df[match(tree_chrono$tip.label, dslit_df$species), ]
+#look at gland_df_ordered to double check that there are no mismatches & things in the df aren't spelled wrong
+# Now assign tip colors based on state
+dslit_tip_state_colors <- dslit_state_colors[dslit_df_ordered$state + 1]
+plot(tree_chrono, show.tip.label = TRUE)
+tiplabels(pch = 21, bg = dslit_tip_state_colors, col = "black", cex = 1.5, offset = -0.02)
+
+
+# RESERVOIR CHAMBER MODIFIED ----
+chamber_states <- read.csv("reservoir_chamber_states.csv")
+chamber_df <- data.frame(chamber_states) #convert table into a data frame 
+summary(chamber_df) #take a look at the data frame. 
+chamber_df$state #double check states
+
+plot(tree_chrono) #double check I have my tree
+nodelabels() #double checking no hidden nodes
+
+# Define colors so that index = state + 1 (since R indexing starts at 1)
+chamber_state_colors <- c("white", "orchid", "purple4")  
+# 0 -> white (absent), 1 -> orchid (typical chamber), 2 -> purple4 (modified chamber)
+# Make sure your dataframe is ordered to match tree tips
+chamber_df_ordered <- chamber_df[match(tree_chrono$tip.label, chamber_df$species), ]
+#look at gland_df_ordered to double check that there are no mismatches & things in the df aren't spelled wrong
+# Now assign tip colors based on state
+chamber_tip_state_colors <- chamber_state_colors[chamber_df_ordered$state + 1]
+plot(tree_chrono, show.tip.label = TRUE)
+tiplabels(pch = 21, bg = chamber_tip_state_colors, col = "black", cex = 1.5, offset = -0.02)
+
+
+# PROXIMAL GLAND ----
+proximal_gland_states <- read.csv("proximal_gland_states.csv") #add your path to your working directory
+proximal_df <- data.frame(proximal_gland_states) #convert table into a data frame 
+summary(proximal_df) #take a look at the data frame. 
+proximal_df$state
+
+# Define colors so that index = state + 1 (since R indexing starts at 1)
+proximal_state_colors <- c("white", "orange")  
+# 0 -> white (absent), 1 -> orange (typical proximal glands)
+# Make sure your dataframe is ordered to match tree tips
+proximal_df_ordered <- proximal_df[match(tree_chrono$tip.label, proximal_df$species), ]
+#look at gland_df_ordered to double check that there are no mismatches & things in the df aren't spelled wrong
+# Now assign tip colors based on state
+proximal_tip_state_colors <- proximal_state_colors[proximal_df_ordered$state + 1]
+plot(tree_chrono, show.tip.label = TRUE)
+tiplabels(pch = 21, bg = proximal_tip_state_colors, col = "black", cex = 1.5, offset = -0.02)
+
+
+# Ancestral State Reconstruction Analysis ASR ----
+# every character, test equal rates model, all rates different model, and symmetrical model.
+# test maddfitz root prior and yang root prior
+# models with the lowest AICc score are best fit
+# Best fitting model will be first with other ones after
+
+# LATERAL DUCTS of DISTAL GLAND ASR ----
+# ER MODEL, MADDFITZ ROOT PRIOR - BEST 
+fitcorER.maddfitz <- rayDISC(tree_chrono, gland_df, 
+                             model = "ER", node.states = "marginal",
+                             state.recon = "subsequently", root.p = "maddfitz")
+fitcorER.maddfitz # AIC 31.96 AICc 32.12
+fitcorER.maddfitz$states
+plotTree(tree_chrono) 
+nodelabels(pie = fitcorER.maddfitz$states, piecol = gland_state_colors) #add probability pies to node
+tiplabels(pch = 21, bg = gland_tip_state_colors, col = "black", cex = 1.5, offset = -0.01)
+legend("topleft", 
+       legend = c("Gland absent (0)", "Typical duct (1)", "Expanded duct (2)"),  # adjust labels as needed
+       fill = gland_state_colors, 
+       border = "black", 
+       cex = 0.9, 
+       bty = "n")   # bty="n" removes the box
+fitcorER.maddfitz$states
+plotTree(tree_chrono) 
+nodelabels()
+#nodelables of phylogeny different than output because rayDISC retur states a matriz where row 1 is the first internal node, does not include tips
+n_tips <- length(tree_chrono$tip.label)
+n_nodes <- tree_chrono$Nnode
+# Create a named version of the states matrix
+states_labeled <- fitcorER.maddfitz$states
+rownames(states_labeled) <- (n_tips + 1):(n_tips + n_nodes)
+# Now you can look up any node by its ape/phytools node number
+states_labeled
+# Plot with both pies AND node number labels so you can cross-reference.
+plotTree(tree_chrono)
+nodelabels(pie = fitcorER.maddfitz$states, 
+           piecol = gland_state_colors, 
+           cex = 0.5)
+nodelabels(text = (n_tips + 1):(n_tips + n_nodes), 
+           adj = c(0, -0.5),   # offset text above the pie
+           cex = 0.6, 
+           frame = "none")
+tiplabels(pch = 21, bg = gland_tip_state_colors, 
+          col = "black", cex = 1.5, offset = -0.01)
+
+#look at posterior probabilities at important nodes:
+#corophioid MRCA 35 
+#1.196054e-02 9.877403e-01 2.991570e-04
+#.01 absent, .98 simple, .0002 expanded 
+
+#node 45 ischyrocerids + podocerids + caprellidae w
+#2.531182e-01 2.093745e-01 5.375073e-01
+#absent: .25, simple duct: .20, expanded duct: .53 state 0 and 1 account for 50% of the prob so not really significant.
+
+#50 5.107131e-03 4.234149e-03 9.906587e-01
+# absent: .005 simples: .004, expanded: .99
+
+#node 46, caprellids distal glands lost in pereopods 3 and 4
+#46 9.562999e-01 1.248210e-02 3.121799e-02
+#no ducts .95, simple .01, expanded .03
+
+#TESTING OTHER MODELS for LATERAL DUCTS of DISTAL GLANDS ----
+# ER MODEL, YANG ROOT PRIOR
+#fitcorER.yang <- rayDISC(tree_chrono, gland_df, 
+#                         model = "ER", node.states = "marginal",
+#                         state.recon = "subsequently", root.p = "yang")
+#fitcorER.yang# AIC 32.95  AICc 33.1
+#fitcorER.yang$states  
+#plotTree(tree_chrono) #visualize
+#nodelabels(pie = fitcorER.yang$states, piecol = gland_state_colors) #add probability pies to node
+#tiplabels(pch = 21, bg = gland_tip_state_colors, col = "black", cex = 1.5, offset = -0.01)
+#legend("topleft", 
+#       legend = c("Gland absent (0)", "Typical duct (1)", "Expanded duct (2)"),  
+#       fill = gland_state_colors, 
+#       border = "black", 
+#       cex = 0.9, 
+#       bty = "n")   
+
+# ARD MODEL, MADDFITZ ROOT PRIOR
+#fitcorARD.maddfitz <- rayDISC(tree_chrono, gland_df, 
+#                              model = "ARD", node.states = "marginal",
+#                              state.recon = "subsequently", root.p = "maddfitz")
+#fitcorARD.maddfitz #AIC 38.23  AICc 42.23
+#fitcorARD.maddfitz$states #
+#plotTree(tree_chrono) #visualize
+#nodelabels(pie = fitcorARD.maddfitz$states, piecol = gland_state_colors) 
+#tiplabels(pch = 21, bg = gland_tip_state_colors, col = "black", cex = 1.5, offset = -0.01)
+#legend("topleft", 
+#       legend = c("Gland absent (0)", "Typical duct (1)", "Expanded duct (2)"),  # adjust labels as needed
+#       fill = gland_state_colors, 
+#       border = "black", 
+#       cex = 0.9, 
+#       bty = "n")  
+
+#SYM model maddfitz rootprior
+#fitcorSYM.maddfitz <- rayDISC(tree_chrono, gland_df, 
+#                              model = "SYM", node.states = "marginal",
+#                              state.recon = "subsequently", root.p = "maddfitz")
+#fitcorSYM.maddfitz #AIC 35.7543 AICc 36.7543
+#fitcorSYM.maddfitz$states 
+
+#SYM model yang rootprior
+#fitcorSYM.yang <- rayDISC(tree_chrono, gland_df, 
+#                              model = "SYM", node.states = "marginal",
+#                              state.recon = "subsequently", root.p = "yang")
+#fitcorSYM.yang #AIC 36.67638 AICc 37.67638
+#fitcorSYM.maddfitz$states 
+
+#MODEL SELECTION BASED ON LOWEST AICc scores:
+#ERmaddfitz: AIC 31.96 AICc 32.12 #ER Maddfitz best!
+#ERyang: AIC 32.95  AICc 33.1
+#ARDmaddfitz: AIC 38.23  AICc 42.23
+#SYMmaddfitz: #AIC 35.7543 AICc 36.7543
+#SYMyang: #AIC 36.67638 AICc 37.67638
+
+# DACTYLUS SLIT LOCATION ASR ----
+# ER MODEL, MADDFITZ ROOT PRIOR - BEST
+fitcorER.maddfitz <- rayDISC(tree_chrono, dslit_df, 
+                             model = "ER", node.states = "marginal",
+                             state.recon = "subsequently", root.p = "maddfitz")
+fitcorER.maddfitz # AIC 31.96 AICc 32.12
+fitcorER.maddfitz$states
+plotTree(tree_chrono) 
+nodelabels(pie = fitcorER.maddfitz$states, piecol = dslit_state_colors) 
+tiplabels(pch = 21, bg = dslit_tip_state_colors, col = "black", cex = 1.5, offset = -0.01)
+legend("topleft", 
+       legend = c("No slit (0)", "Slit same side (1)", "Slit oppposite (2)"),
+       fill = dslit_state_colors, 
+       border = "black", 
+       cex = 0.9,
+       bty = "n") 
+
+states_labeled <- fitcorER.maddfitz$states
+rownames(states_labeled) <- (n_tips + 1):(n_tips + n_nodes)
+plotTree(tree_chrono)
+nodelabels(pie = fitcorER.maddfitz$states, 
+           piecol = dslit_state_colors, 
+           cex = 0.9)
+nodelabels(text = (n_tips + 1):(n_tips + n_nodes), 
+           adj = c(0, -0.5),   # offset text above the pie
+           cex = 0.6, 
+           frame = "none")
+tiplabels(pch = 21, bg = dslit_tip_state_colors, 
+          col = "black", cex = 1.5, offset = -0.01)
+states_labeled
+
+#check posterior probabilities of key nodes:
+
+#node 35 corophoid MRCA had dactylus slit
+#1.196091e-02 9.877399e-01 2.991773e-04
+#no slit .01 slit same .98 slit opposite .0002
+
+#node 45
+#2.531178e-01 2.093747e-01 5.375075e-01
+#no slit .25, slit same .20, slit opposite .53
+
+#node 50
+#50 5.107330e-03 4.234323e-03 9.906583e-01
+#no slit .005 slit same .004 slit opposite .99
+
+#TESTING OTHER MODELS for DACTYLUS SLIT LOCATION ----
+#ER model, yang
+#fitcorER.yang <- rayDISC(tree_chrono, dslit_df, 
+#                             model = "ER", node.states = "marginal",
+#                             state.recon = "subsequently", root.p = "yang")
+#fitcorER.yang # 32.95052 33.10437
+
+#ARD model, maddfitz
+#fitcorARD.maddfitz <- rayDISC(tree_chrono, dslit_df, 
+#                         model = "ARD", node.states = "marginal",
+#                         state.recon = "subsequently", root.p = "maddfitz")
+#fitcorARD.maddfitz #38.22569 42.22569
+#ER model, yang
+#fitcorARD.yang <- rayDISC(tree_chrono, dslit_df, 
+#                         model = "ARD", node.states = "marginal",
+#                         state.recon = "subsequently", root.p = "yang")
+#fitcorARD.yang # 39.64666 43.64666
+#SYM model, maddfitz
+#fitcorSYM.maddfitz <- rayDISC(tree_chrono, dslit_df, 
+#                              model = "SYM", node.states = "marginal",
+#                              state.recon = "subsequently", root.p = "maddfitz")
+#fitcorSYM.maddfitz #35.7543 36.7543
+#SYM model, yang
+#fitcorSYM.yang <- rayDISC(tree_chrono, dslit_df, 
+#                              model = "SYM", node.states = "marginal",
+#                              state.recon = "subsequently", root.p = "yang")
+#fitcorSYM.yang #36.67637 37.67637
+
+
+# RESERVOIR CHAMBER ASR ----
+# ER MODEL, MADDFITZ ROOT PRIOR BEST
+fitcorER.maddfitz <- rayDISC(tree_chrono, chamber_df, 
+                             model = "ER", node.states = "marginal",
+                             state.recon = "subsequently", root.p = "maddfitz")
+fitcorER.maddfitz # AIC 39.96 AICc 40.11
+fitcorER.maddfitz$states
+plotTree(tree_chrono) 
+nodelabels(pie = fitcorER.maddfitz$states, piecol = chamber_state_colors)
+tiplabels(pch = 21, bg = chamber_tip_state_colors, col = "black", cex = 1.5, offset = -0.01)
+legend("topleft", 
+       legend = c("No chamber (0)", "Typical chamber (1)", "Modified chamber (2)"),
+       fill = chamber_state_colors, 
+       border = "black", 
+       cex = 0.9,
+       bty = "n")   
+
+states_labeled <- fitcorER.maddfitz$states
+rownames(states_labeled) <- (n_tips + 1):(n_tips + n_nodes)
+plotTree(tree_chrono)
+nodelabels(pie = fitcorER.maddfitz$states, 
+           piecol = chamber_state_colors, 
+           cex = 0.9)
+nodelabels(text = (n_tips + 1):(n_tips + n_nodes), 
+           adj = c(0, -0.5),  
+           cex = 0.6, 
+           frame = "none")
+tiplabels(pch = 21, bg = chamber_tip_state_colors, 
+          col = "black", cex = 1.5, offset = -0.01)
+states_labeled
+#check posterior probabilites at key nodes: 
+
+#corophioid MRCA 
+#35 3.898312e-02 9.311396e-01 2.987724e-02
+#no chamber .003 chamber .93 modified chamber .02
+
+#41 9.745622e-03 7.367413e-01 2.535131e-01
+# .0009 .7 .25
+#42 1.229810e-02 4.377311e-01 5.499708e-01 #sunamphitoe & photis
+#no chamber .01 chamber .43 modified .54 not so supported
+
+#44 1.326356e-02 4.025592e-01 5.841772e-01 #notopoma and dulichia
+#no chamber .001 chamber .40 modified .58 not so supported
+
+
+#TESTING OTHER MODELS for RESERVOIR CHAMBER STATES ----
+# ER MODEL, YANG ROOT PRIOR 
+#fitcorER.yang <- rayDISC(tree_chrono, chamber_df, 
+#                         model = "ER", node.states = "marginal",
+#                         state.recon = "subsequently", root.p = "yang")
+#fitcorER.yang# AIC 40.7 AICc 40.87
+#fitcorER.yang$states  
+#plotTree(tree_chrono) #visualize
+#nodelabels(pie = fitcorER.yang$states, piecol = chamber_state_colors)
+#tiplabels(pch = 21, bg = chamber_tip_state_colors, col = "black", cex = 1.5, offset = -0.01)
+#legend("topleft", 
+#       legend = c("No chamber (0)", "Typical chamber (1)", "Modified chamber (2)"),
+#       fill = chamber_state_colors, 
+#       border = "black", 
+#       cex = 0.9,
+#       bty = "n")  
+
+# ARD MODEL, MADDFITZ ROOT PRIOR
+#fitcorARD.maddfitz <- rayDISC(tree_chrono, chamber_df, 
+#                              model = "ARD", node.states = "marginal",
+#                              state.recon = "subsequently", root.p = "maddfitz")
+#fitcorARD.maddfitz #AIC 45.12 AICc 49.12
+#fitcorARD.maddfitz$states #
+#plotTree(tree_chrono) #visualize
+#nodelabels(pie = fitcorARD.maddfitz$states, piecol = chamber_state_colors) #add probability pies to node
+#tiplabels(pch = 21, bg = chamber_tip_state_colors, col = "black", cex = 1.5, offset = -0.01)
+#legend("topleft", 
+#       legend = c("No chamber (0)", "Typical chamber (1)", "Modified chamber (2)"),  # adjust labels as needed
+#       fill = chamber_state_colors, 
+#       border = "black", 
+#       cex = 0.9,
+#       bty = "n")   # bty="n" removes the box
+#fitcorARD.yang <- rayDISC(tree_chrono, chamber_df, 
+#                              model = "ARD", node.states = "marginal",
+#                              state.recon = "subsequently", root.p = "yang")
+#fitcorARD.yang #AIC 45.93363 49.93363
+
+# SYM model, maddfitz
+#fitcorSYM.maddfitz <- rayDISC(tree_chrono, chamber_df, 
+#                              model = "SYM", node.states = "marginal",
+#                              state.recon = "subsequently", root.p = "maddfitz")
+#fitcorSYM.maddfitz #40.9272 41.9272
+#Sym.yang
+#fitcorSYM.yang <- rayDISC(tree_chrono, chamber_df, 
+#                              model = "SYM", node.states = "marginal",
+#                              state.recon = "subsequently", root.p = "yang")
+#fitcorSYM.yang #41.93187 42.93187
+
+#Choose a model, best is ER maddfitz
+# ER maddfitz: AIC 39.96 AICc 40.11
+# ER yang:  AIC 40.7 AICc 40.87
+# ARD maddfitz: AIC 45.12 AICc 49.12
+# ARD yang: AIC 45.93363 49.93363
+# SYM maddfitz: 40.9272 41.9272
+
+#PROXIMAL GLAND ASR ----
+#ARD MODEL, MADDFITZ - BEST
+fitcorARD.maddfitz <- rayDISC(tree_chrono, proximal_df, 
+                              model = "ARD", node.states = "marginal",
+                              state.recon = "subsequently", root.p = "maddfitz")
+fitcorARD.maddfitz #31.52114 AICc 32.00114
+fitcorARD.maddfitz$states #
+plotTree(tree_chrono) #visualize
+nodelabels(pie = fitcorARD.maddfitz$states, piecol = proximal_state_colors)
+tiplabels(pch = 21, bg = proximal_tip_state_colors, col = "black", cex = 1.5, offset = -0.01)
+legend("topleft", 
+       legend = c("Proximal gland absent (0)", "Typical proximal glands (1)"),
+       fill = proximal_state_colors, 
+       border = "black", 
+       cex = 0.9, 
+       bty = "n")
+
+states_labeled <- fitcorARD.maddfitz$states
+rownames(states_labeled) <- (n_tips + 1):(n_tips + n_nodes)
+plotTree(tree_chrono)
+nodelabels(pie = fitcorARD.maddfitz$states, 
+           piecol = proximal_state_colors, 
+           cex = 0.9)
+nodelabels(text = (n_tips + 1):(n_tips + n_nodes), 
+           adj = c(0, -0.5),
+           cex = 0.6, 
+           frame = "none")
+tiplabels(pch = 21, bg = proximal_tip_state_colors, 
+          col = "black", cex = 1.5, offset = -0.01)
+states_labeled
+#check posterior probabilities of key nodes:
+
+#amphipod MRCA node 29
+#8.740091e-19 1.0000000000
+#proximal glands present
+
+#node 35 2.958157e-21 1.0000000000
+#losses in podocerids 
+
+#node 51
+#7.544580e-01 0.2455419775
+#no gland .75 glands .24
+
+#TESTING OTHER MODELS for PROXIMAL GLANDS ----
+# ER MODEL, MADDFITZ ROOT PRIOR 
+#fitcorER.maddfitz <- rayDISC(tree_chrono, proximal_df, 
+#                             model = "ER", node.states = "marginal",
+#                             state.recon = "subsequently", root.p = "maddfitz")
+#fitcorER.maddfitz # AIC 32.79037 AICc 32.94421
+#fitcorER.maddfitz$states #check state transition using node number. Check node 35, 45 and 50
+#plotTree(tree_chrono) 
+#nodelabels(pie = fitcorER.maddfitz$states, piecol = proximal_state_colors)
+#tiplabels(pch = 21, bg = proximal_tip_state_colors, col = "black", cex = 1.5, offset = -0.01)
+#legend("topleft", 
+#       legend = c("Gland absent (0)", "Typical proximal glands (1)"),  
+#       fill = proximal_state_colors, 
+#       border = "black", 
+#       cex = 0.9, 
+#       bty = "n")
+
+#ER MODEL, YANG ROOT PRIOR
+#fitcorER.yang <- rayDISC(tree_chrono, proximal_df, 
+#                         model = "ER", node.states = "marginal",
+#                         state.recon = "subsequently", root.p = "yang")
+#fitcorER.yang # AIC 32.79167 AICc 32.94552
+#fitcorER.yang$states  
+#plotTree(tree_chrono) #visualize
+#nodelabels(pie = fitcorER.yang$states, piecol = proximal_state_colors)
+#tiplabels(pch = 21, bg = proximal_tip_state_colors, col = "black", cex = 1.5, offset = -0.01)
+#legend("topleft", 
+#       legend = c("Gland absent (0)", "Typical proximal glands (1)"),
+#       fill = proximal_state_colors, 
+#       border = "black", 
+#       cex = 0.9, 
+#       bty = "n")
+
+#ARD yang
+#fitcorARD.yang <- rayDISC(tree_chrono, proximal_df, 
+#                              model = "ARD", node.states = "marginal",
+#                              state.recon = "subsequently", root.p = "yang")
+#fitcorARD.yang #34.24532 34.72532
+
+#SYM MODEL, MADDFITZ 
+#fitcorSYM.maddfitz <- rayDISC(tree_chrono, proximal_df, 
+#                              model = "SYM", node.states = "marginal",
+#                              state.recon = "subsequently", root.p = "maddfitz")
+#fitcorSYM.maddfitz #32.79037 32.94421
+#SYM MODEL, yang 
+#fitcorSYM.yang <- rayDISC(tree_chrono, proximal_df, 
+#                              model = "SYM", node.states = "marginal",
+#                              state.recon = "subsequently", root.p = "yang")
+#fitcorSYM.yang #32.79167 32.94552
+
+#Final figures from ASR analyses in Fig. 4
+
+# PART TWO - CORRELATED EVOLUTION MODELING ----
+#cophylogenetic trait analysis can be done using Pagel’s (1994) discrete model of correlated trait evolution
+#I'm looking at if there is correlation between using attachment threads for silk and the modified reservoir chamber
+#A. First I will use Pagel's discrete model of correlated trait evolution to test independence or dependence of traits
+#B. Then I will use Simmap for stochastic character mapping, which asks: Given these traits and the tree, how could the joint states have evolved along the branches
+#C. Finally I will visualize the Simmap and the summarization of all simulations
+
+# LOAD FILES & PREP DATA ----
+# Load tree
+# will be using the same starting tree, create new tree pruned 
+tree <- read.tree("tree_newick.txt") 
+tree.pruned <- collapse.singles(tree) #collape single nodes (the extra sunampithoe and neoxenodice)
+plot(tree.pruned)
+
+# Load trait data 
+#column 1 morphology (0=not modified chamber, 1 = modified chamber)
+#column 2 ecology (0=no attachment threads, 1= attachment threads)
+mydata <- read.csv("chamber_silkthreads.csv", row.names = 1)
+
+#Create named vectors for each trait
+morph <- setNames(mydata$morphology, rownames(mydata))
+ecol  <- setNames(mydata$ecology, rownames(mydata))
+# Make sure they are factors or binary
+morph <- as.factor(morph)
+ecol  <- as.factor(ecol)
+
+
+# A. PERFORM PAGEL'S test CORRELATED MODEL ----
+result <- fitPagel(tree.pruned, morph, ecol, model = "ARD", method = "fitDiscrete")
+#I'm using an ARD model since it is better at capturing asymmetry in dependent evolution
+#I'm using the fitDiscrete method since it uses a markov model along the phylogeny. I don't have a lot of priors or states, and my data set is relatively small so 
+#I don't see the need to use bayestraits or intergrate a more complex model.
+
+print(result) # Inspect results
+#The test compares two models: 
+#Independent evolution of trait 1 and trait 2.
+# Dependent evolution (one trait’s transition rates depend on the state of the other).
+#From these results it looks like the dependent model has more support. 
+#Looks like the evo transition between two states is dependent of eachother
+str(result)
+# transition rate matrix for dependent model
+result$dependent.Q
+#Morphology changes from 1→0 readily when ecology = 0 (17.6).
+#Morphology changes from 0→1 readily when ecology = 1 (9.17).
+#ecological transition depends strongly on morphology 
+plot(result$dependent.Q)
+
+
+# B. STOCHASTIC CHARACTER MAPIING & VISUALIZING ----
+#I have two binary traits, so I can combine them into a single “joint character” with 4 possible states (0|0, 0|1, 1|0, 1|1), 
+#and then do stochastic character mapping simulations 
+#assing join traits
+joint <- paste(morph, ecol, sep = "|")
+joint <- factor(joint, levels = c("0|0","0|1","1|0","1|1"))
+joint <- setNames(joint, names(morph))
+levels(joint) 
+unique(joint) #check to see if they are consistent
+#They have different matrix so need to drop the states that are not present (1|0 and 0|1)
+joint_reduced <- droplevels(joint)   # drops unused states
+levels(joint_reduced) # should now be "0|0" and "1|1"
+
+# Allow simmap to re-estimate the transition rates just using 0|0 and 1|1
+simmap <- make.simmap(tree.pruned, joint_reduced, model = "ARD", nsim = 100)
+#Transitions 0|0 → 1|1 happen at rate ≈ 0.37.  
+#Transitions 1|1 → 0|0 were estimated as 0 (absorbing).  
+#So once the clade evolves into `1|1`, the model says it never reverts.  
+
+#get tree node and tip numbers:
+n_tips <- length(tree.pruned$tip.label)
+n_nodes <- tree.pruned$Nnode
+
+#Visualize one single tree just to see what it looks like
+cols <- setNames(c("gray80","purple"), c("0|0","1|1"))
+#Plot one sampling
+plotSimmap(simmap[[97]] , cols, fsize = 0.7, lwd = 4, pts = FALSE) #this is just for 1 simulation, can look at any of the 100 simulations
+nodelabels(text = (n_tips + 1):(n_tips + n_nodes), 
+           adj = c(0, -0.5),  
+           cex = 0.6, 
+           frame = "none")
+add.simmap.legend(colors = cols, prompt = FALSE, x = 0, y = 27)  #Add legend in top-left slightly below the top
+# Add node pies, use describe.simmap to get posterior probabilities at nodes
+simmap_summary <- describe.simmap(simmap)
+# simmap_summary$ace is a matrix of posterior probabilities for each state at each node
+nodelabels(pie = simmap_summary$ace, piecol = cols, cex = 0.7)
+
+#Look at node state posterior probabilities 
+node_pp <- simmap_summary$ace
+node_pp
+#node 44 cerapus (Notopoma) and dulichia
+#0|0 0.60, 1|1 0.40 so more likely not at this node
+
+#node 42 sunamphitoe and photis
+#0|0 0.55, 1|1 0.45 so likely not at this node
+
+#For more info on all the simulation
+describe.simmap(simmap)$count #look at the simulations
+simmap_summary <- describe.simmap(simmap)  # simmap is the list of 100 maps
+simmap_summary
+#trees have 3.1 changes between states on average
+
+#C. VISUALIZE STOCHASTIC CHARACTER MAPPING SIMULATION RESULTS
+#visualize all simulations 
+# Set the layout to a 10 x 10 grid (100 plots)
+par(mfcol = c(10, 10), mar = c(0.5, 0.5, 0.5, 0.5))
+# Plot all 100 maps
+lapply(simmap, plotSimmap, ftype = "off", lwd = 1)
+dmap=densityMap(simmap, res=100)
+dev.off()
+# Define custom colors for states
+cols <- setNames(c("gray80","purple"), c("0|0", "1|1"))
+dmap <- setMap(dmap, cols)
+# Plot the density map (average) along the tree for final figure
+plot(dmap, fsize = c(0.7, 0.9), lwd = 3, outline = TRUE, legend = TRUE)
+#this makes the final figure which is in the supplemental material: Supplementary Figure S5
+
+#RESULT SUMMARY ----
+#Ok in summary, this is the takeaway: 
+#In the Pagel's test using an ARD model, the dependent model provided a significantly better fit than the independent model (logL_independent = -19.68, logL_dependent = -9.56, likelihood ratio = 20.24, p = 0.00045), 
+#indicating that traits of a modified reservoir chamber and the production of attachment silk evolved in a correlated manner.
+#I performed stochastic mapping using make.simmap to estimate the posterior probabilities of joint trait states at internal nodes and along branches.
+#Across the stochastic maps, 1|1 evolved an average of 3 times (with uncertainty), indicating multiple convergent origins in this phylogeny. 
+#when plotting the density of transitions from 100 simulations, it looks like evolving 1|1 happens along the branches of Cerapus, Dulichia, Sunamphitoe, and Photis. #At this time it's unresolved 
